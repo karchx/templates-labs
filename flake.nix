@@ -14,4 +14,11 @@
             haskell = import ./modules/haskell.nix { inherit pkgs; };
         });
     };
+
+    templates = {
+        cpp = {
+            path = ./modules/cpp;
+            description = "Environment to c++";
+        };
+    };
 }
