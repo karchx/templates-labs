@@ -1,17 +1,17 @@
 {
-  description = "Description for the project";
+  description = "Templates labs with flake";
 
   inputs = {
-    flake-parts.url = "github:hercules-ci/flake-parts";
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
   };
 
-  outputs = inputs@{ flake-parts, ... }:
-    flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
-      modules = [
-        ./modules/cpp.nix
-        ./modules/haskell.nix
-      ];
+  outputs = { self, nixpkgs }: let
+    systems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+    forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
+    in {
+        devShells = forAllSystems (pkgs: {
+            cpp = import ./modules/cpp.nix { inherit pkgs; };
+            haskell = import ./modules/haskell.nix { inherit pkgs; };
+        });
     };
 }
