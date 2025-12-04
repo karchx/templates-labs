@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-job
+spec:
+  schedule: "*/1 * * * *"  # Runs every minute
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup-container
+            image: busybox:1.28
+            imagePullPolicy: IfNotPresent
+            command: ["/bin/sh", "-c", "echo Creating backup..."]
+          restartPolicy: OnFailure
