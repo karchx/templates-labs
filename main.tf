@@ -44,3 +44,8 @@ resource "google_container_cluster" "primary" {
         channel = "REGULAR"
     }
 }
+
+module "gke" {
+    source = "./modules/gke"
+    project_id = "project-4530f220-dbfa-40df-8f5"
+}

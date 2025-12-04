@@ -2,14 +2,6 @@ locals {
   env = "dev"
 }
 
-data "google_container_engine_versions" "gke_versions" {}
-
-data "google_project" "project" {}
-
-data "google_container_registry_image" "default" {
-    name = "gke-${local.env}"
-}
-
 resource "google_compute_network" "vpc_network" {
   name                    = "gke-vpc-${local.env}"
   routing_mode = "REGIONAL"
@@ -89,7 +81,6 @@ resource "google_compute_firewall" "kyverno-ingress-firewall" {
   ]
 }
 
-
 # GKE Cluster
 resource "google_container_cluster" "this" {
   name = "gke-cluster-${local.env}"
@@ -123,4 +114,47 @@ resource "google_container_cluster" "this" {
     cluster_secondary_range_name  = "pods-ip-range"
     services_secondary_range_name = "services-ip-range"
   }
+
+    private_cluster_config {
+        enable_private_nodes = true
+        enable_private_endpoint = false
+        master_ipv4_cidr_block = "172.16.0.0/28"
+    }
+}
+
+# Node pool
+resource "google_service_account" "kubernetes" {
+    account_id = "kubernetes"
+}
+
+resource "google_container_node_pool" "primary_nodes" {
+    name = "primary-node-pool-${local.env}"
+    cluster = google_container_cluster.this.id
+    node_count = 2
+
+    management {
+        auto_repair = true
+        auto_upgrade = true
+    }
+
+    autoscaling {
+        min_node_count = 2
+        max_node_count = 2
+        location_policy = "BALANCED"
+    }
+
+    node_config {
+        preemptible = false
+        machine_type = "e2-standard-4"
+
+        labels = {
+            role = "general"
+        }
+
+        service_account = google_service_account.kubernetes.email
+
+        oauth_scopes = [
+            "https://www.googleapis.com/auth/cloud-platform",
+        ]
+    }
 }
